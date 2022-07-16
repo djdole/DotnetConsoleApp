@@ -1,0 +1,18 @@
+{
+    "RefreshMs": 10000,
+    "Settings": [
+        {
+            "WorkItems": [
+                {
+                    "Enabled": true,
+                    "Driver": "git",
+                    "Settings": {
+                        "NOTE": "300000 ms = 5 minutes",
+                        "ExpiryMS": 300000,
+                        "Timeout": 30000
+                    }
+                }
+            ]
+        }
+    ]
+}
