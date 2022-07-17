@@ -11,11 +11,12 @@ namespace Net.DJDole.Settings
 
     public abstract class Base
     {
-        protected readonly System.Timers.Timer watch;
-        protected string path { get; set; }
-        protected string hash { get; set; }
-        protected dynamic values;
         protected ILogger logger;
+        protected dynamic values;
+        protected readonly System.Timers.Timer watch;
+
+        protected string hash { get; set; }
+        protected string path { get; set; }
 
         protected Base(string path, string name)
         {
@@ -31,6 +32,12 @@ namespace Net.DJDole.Settings
             ).CreateLogger("Errors");
         }
 
+        public void Restart()
+        {
+            Stop();
+            Start();
+        }
+
         public void Start()
         {
             this.watch.Start();
@@ -39,25 +46,17 @@ namespace Net.DJDole.Settings
 
         public void Stop() => this.watch.Stop();
 
-        public void Restart()
-        {
-            Stop();
-            Start();
-        }
-
-        private void LoadSettings(object sender, System.Timers.ElapsedEventArgs args) => Load();
-
         public void Load()
         {
             try
             {
                 using (FileStream stream = new FileStream(this.path, FileMode.Open, FileAccess.Read))
                 {
-                    string settings_json = new StreamReader(stream).ReadToEnd();
-                    string new_hash = Net.DJDole.Utils.ComputeHash(settings_json);
-                    if (new_hash != this.hash)
+                    string loaded = new StreamReader(stream).ReadToEnd();
+                    string hash = Net.DJDole.Utils.ComputeHash(loaded);
+                    if (hash != this.hash)
                     {
-                        Update(JObject.Parse(settings_json), new_hash);
+                        Update(JObject.Parse(loaded), hash);
                     }
                 }
             }
@@ -67,16 +66,18 @@ namespace Net.DJDole.Settings
             }
         }
 
-        private void Update(dynamic new_values, string new_hash)
+        private void LoadSettings(object sender, System.Timers.ElapsedEventArgs args) => Load();
+
+        private void Update(dynamic values, string hash)
         {
-            this.values = new_values;
-            this.hash = new_hash;
+            this.hash = hash;
+            this.values = values;
             try
             {
-                double load_interval = double.Parse((values.RefreshMs).ToString());
-                if ((this.watch != null) && (this.watch.Interval != load_interval))
+                double interval = double.Parse((values.RefreshMs).ToString());
+                if ((this.watch != null) && (this.watch.Interval != interval))
                 {
-                    this.watch.Interval = load_interval;
+                    this.watch.Interval = interval;
                     Restart();
                 }
             }
